@@ -3,6 +3,7 @@
 from flask_mail import Message
 from app import mail
 import logging
+import smtplib
 
 logger = logging.getLogger(__name__)
 
@@ -22,15 +23,21 @@ def send_email(to_email, subject, body):
         msg = Message(
             subject=subject,
             recipients=[to_email],
-            html=body
+            html=body,
         )
 
         mail.send(msg)
-        logger.info(f"Email sent successfully to {to_email}")
+        logger.info("Email sent successfully", extra={"to": to_email})
         return True
 
+    except smtplib.SMTPAuthenticationError as e:
+        logger.error("SMTP authentication failed when sending email", exc_info=True)
+        return False
+    except smtplib.SMTPException as e:
+        logger.error("SMTP error occurred while sending email", exc_info=True)
+        return False
     except Exception as e:
-        logger.error(f"Failed to send email to {to_email}: {str(e)}")
+        logger.error("Unexpected error when sending email", exc_info=True)
         return False
 
 def send_teacher_credentials_email(teacher_name, teacher_email, username, password):

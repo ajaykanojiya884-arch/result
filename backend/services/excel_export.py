@@ -64,7 +64,7 @@ def generate_excel_for_batch(batch_id: str) -> Workbook:
     import re
 
     def natural_sort_key(s):
-        """Standard natural sort key for roll numbers like 1, 2, 10."""
+        
         return [int(text) if text.isdigit() else text.lower()
                 for text in re.split('([0-9]+)', s.roll_no)]
 

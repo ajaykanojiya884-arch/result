@@ -11,6 +11,15 @@ import { REPORT_CONFIG } from '../reportConfig';
 const MarksheetTemplate = forwardRef(({ data, style }, ref) => {
   if (!data) return null;
 
+  // Helper: Generate current date in DD/MM/YYYY format
+  const getCurrentDate = () => {
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const year = today.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   // -- Helpers --
   const ORDER = ["ENG", "HINDI", "IT", "MARATHI", "FRENCH", "GERMAN", "ECO", "BK", "OC", "SP", "MATHS"];
   const GRADE_SUBJECTS = ["EVS", "PE"];
@@ -62,6 +71,21 @@ const MarksheetTemplate = forwardRef(({ data, style }, ref) => {
       ...style
     }}>
       <style>{`
+        @media print {
+          .marksheet-container {
+            margin: 0;
+            padding: 10mm;
+          }
+          .report-table {
+            page-break-inside: avoid;
+          }
+        }
+        
+        @page {
+          size: A4;
+          margin: 10mm;
+        }
+        
         .report-table {
           width: 100%;
           border-collapse: collapse;
@@ -83,19 +107,110 @@ const MarksheetTemplate = forwardRef(({ data, style }, ref) => {
         .sub-header { font-size: 11px; }
       `}</style>
 
-      {/* Header */}
-      <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-        <h2 style={{ margin: '0 0 5px 0', textTransform: 'uppercase', fontSize: '20px', fontWeight: '900' }}>{REPORT_CONFIG.schoolName}</h2>
-        <div style={{ fontSize: '11px', marginBottom: '10px', textTransform: 'uppercase', fontWeight: 'bold' }}>{REPORT_CONFIG.schoolAddress}</div>
-        <h3 style={{ margin: '5px 0', fontSize: '16px', fontWeight: 'bold' }}>{REPORT_CONFIG.reportTitle}</h3>
-        
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginTop: '10px', fontWeight: 'bold', padding: '0 5px' }}>
-             <div>INDEX NO: J16.15.017 &nbsp;&nbsp;&nbsp;&nbsp; UDISE NO: 27211007406</div> 
-             <div></div>
+      {/* Header with Logo and Center Info - Print-Ready SIES Format */}
+      <div style={{ 
+        pageBreakAfter: 'avoid', 
+        breakAfter: 'avoid',
+        marginBottom: '15px',
+        borderBottom: '2px solid #000',
+        paddingBottom: '12px'
+      }}>
+        {/* Header with Logo (Left) and Center Info */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '20px', marginBottom: '10px' }}>
+          {/* SIES Logo - Left Aligned */}
+          <div style={{
+            width: '80px',
+            flexShrink: 0,
+            textAlign: 'center'
+          }}>
+            {REPORT_CONFIG.logoUrl ? (
+              <img
+                src={REPORT_CONFIG.logoUrl}
+                alt="School Logo"
+                style={{
+                  width: '100px',
+                  height: '80px',
+                  objectFit: 'contain',
+                  borderRadius: '8px',
+                   border: '1px solid #999'
+                }}
+                onError={(e) => {
+                  // Fallback to placeholder if image fails to load
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+              />
+            ) : null}
+            <div style={{
+              width: '100px',
+              height: '70px',
+              background: '#e8e8e8',
+              // border: '1px solid #999',
+              // borderRadius: '8px',
+              display: REPORT_CONFIG.logoUrl ? 'none' : 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '10px',
+              fontWeight: 'bold',
+              color: '#333',
+              textAlign: 'center',
+              padding: '4px'
+            }}>
+              SIES LOGO
+            </div>
+          </div>
+
+          {/* Center: School Info - Perfectly Centered */}
+          <div style={{ flex: 1, textAlign: 'center' }}>
+            <h2 style={{ 
+              margin: '0 0 4px 0',
+              textTransform: 'uppercase',
+              fontSize: '18px',
+              fontWeight: '900',
+              letterSpacing: '0.5px'
+            }}>
+              {REPORT_CONFIG.schoolName}
+            </h2>
+            <div style={{
+              fontSize: '10px',
+              marginBottom: '8px',
+              textTransform: 'uppercase',
+              fontWeight: 'bold',
+              letterSpacing: '0.3px',
+              lineHeight: '1.4'
+            }}>
+              {REPORT_CONFIG.schoolAddress}
+            </div>
+            <h3 style={{
+              margin: '6px 0 0 0',
+              fontSize: '15px',
+              fontWeight: 'bold',
+              letterSpacing: '0.5px'
+            }}>
+              STATEMENT OF MARKS – XI STANDARD
+            </h3>
+          </div>
+
+          {/* Right Spacer (for symmetry with logo) */}
+          <div style={{ width: '80px', flexShrink: 0 }}></div>
         </div>
-        <div style={{ fontWeight: 'bold', fontSize: '12px', marginTop: '2px', padding: '0 5px', display: 'flex', justifyContent: 'center', position: 'relative' }}>
-             <span>EXAMINATION HELD IN {REPORT_CONFIG.examheldIn}</span>
-             <span style={{ position: 'absolute', right: 5 }}>Date: &nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;/20&nbsp;&nbsp;</span>
+
+        {/* Info Row: INDEX, UDISE, and AUTO-GENERATED DATE */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          fontSize: '11px',
+          marginTop: '8px',
+          fontWeight: 'bold',
+          padding: '0 5px',
+          alignItems: 'center'
+        }}>
+          <div>
+            INDEX NO: J16.15.017 &nbsp; | &nbsp; UDISE NO: 27211007406
+          </div>
+          <div>
+            EXAMINATION HELD IN {REPORT_CONFIG.examheldIn} &nbsp; | &nbsp; Date: {getCurrentDate()}
+          </div>
         </div>
       </div>
 

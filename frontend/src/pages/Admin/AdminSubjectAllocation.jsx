@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import { confirmAction, showSuccess, showError } from "../../utils/dialogs";
 
 export default function AdminSubjectAllocation() {
   const navigate = useNavigate();
@@ -29,19 +30,21 @@ export default function AdminSubjectAllocation() {
       setTeachers(tRes.data);
       setSubjects(sRes.data);
       setAllocations(aRes.data);
-    } catch {
-      alert("Failed to load data");
+    } catch (err) {
+      showError(err.response?.data?.error || "Failed to load data");
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this allocation?")) return;
+    const ok = await confirmAction("Are you sure you want to delete?");
+    if (!ok) return;
 
     try {
       await api.delete(`/admin/allocations/${id}`);
       loadInitialData();
-    } catch {
-      alert("Failed to delete");
+      showSuccess("Allocation deleted successfully");
+    } catch (err) {
+      showError(err.response?.data?.error || "Failed to delete");
     }
   };
 
@@ -61,8 +64,9 @@ export default function AdminSubjectAllocation() {
 
       setForm({ teacher_id: "", subject_id: "", division: "" });
       loadInitialData();
-    } catch {
-      alert("Allocation failed (duplicate?)");
+      showSuccess("Allocation saved successfully");
+    } catch (err) {
+      showError(err.response?.data?.error || "Allocation failed (duplicate?)");
     }
   };
 

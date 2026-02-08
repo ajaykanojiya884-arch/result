@@ -1,3 +1,4 @@
 {
-  "backend/tests/test_result_refactor.py": true
+  "backend/tests/test_result_refactor.py": true,
+  "backend/test_multi_database.py": true
 }

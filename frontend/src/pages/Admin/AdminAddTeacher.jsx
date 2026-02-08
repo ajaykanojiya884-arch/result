@@ -44,7 +44,8 @@ export default function AdminAddTeacher() {
         setTimeout(() => navigate("/admin"), 800);
       }
     } catch (err) {
-      setMsg(err.response?.data?.error || "Failed to add teacher.");
+      const errorMsg = err.response?.data?.error || err.message || "Failed to add teacher";
+      setMsg(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -101,71 +102,3 @@ export default function AdminAddTeacher() {
   );
 }
 
-const styles = {
-  page: {
-    minHeight: "100vh",
-    background: "#f5f7fb",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  card: {
-    background: "#fff",
-    width: 460,
-    padding: 30,
-    borderRadius: 14,
-    boxShadow: "0 12px 30px rgba(0,0,0,0.12)",
-  },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  backLink: {
-    color: "#0d6efd",
-    cursor: "pointer",
-    fontSize: 14,
-  },
-  title: {
-    margin: 0,
-    fontSize: 22,
-    fontWeight: 600,
-  },
-  loggedIn: {
-    fontSize: 14,
-    color: "#555",
-    marginBottom: 18,
-  },
-  label: {
-    display: "block",
-    fontSize: 14,
-    fontWeight: 500,
-    marginBottom: 6,
-    marginTop: 12,
-  },
-  input: {
-    width: "100%",
-    padding: "9px 10px",
-    borderRadius: 6,
-    border: "1px solid #ccc",
-    fontSize: 14,
-  },
-  primaryBtn: {
-    width: "100%",
-    marginTop: 20,
-    padding: "11px",
-    background: "#0d6efd",
-    color: "#fff",
-    border: "none",
-    borderRadius: 6,
-    fontWeight: 500,
-    cursor: "pointer",
-  },
-  checkbox: {
-    display: "block",
-    marginTop: 10,
-    fontSize: 13,
-    color: "#333",
-  },
-};

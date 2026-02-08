@@ -43,34 +43,40 @@ def register_error_handlers(app):
     
     @app.errorhandler(ValidationError)
     def handle_validation_error(e):
+        app.logger.warning(f"Validation error: {e.message}")
         return {"error": e.message}, e.status_code
     
     @app.errorhandler(AuthenticationError)
     def handle_auth_error(e):
+        app.logger.warning(f"Authentication error: {e.message}")
         return {"error": e.message}, e.status_code
     
     @app.errorhandler(AuthorizationError)
     def handle_authz_error(e):
+        app.logger.warning(f"Authorization error: {e.message}")
         return {"error": e.message}, e.status_code
     
     @app.errorhandler(NotFoundError)
     def handle_not_found(e):
+        app.logger.warning(f"Not found error: {e.message}")
         return {"error": e.message}, e.status_code
     
     @app.errorhandler(DatabaseError)
     def handle_db_error(e):
         app.logger.error(f"Database error: {e.message}")
-        return {"error": "Database operation failed"}, e.status_code
+        return {"error": e.message}, e.status_code
     
     @app.errorhandler(400)
     def handle_bad_request(e):
+        app.logger.warning(f"Bad request: {str(e)}")
         return {"error": "Bad request"}, 400
     
     @app.errorhandler(404)
     def handle_not_found_default(e):
+        app.logger.warning(f"Endpoint not found: {str(e)}")
         return {"error": "Endpoint not found"}, 404
     
     @app.errorhandler(500)
     def handle_internal_error(e):
         app.logger.exception("Internal server error")
-        return {"error": "Internal server error"}, 500
+        return {"error": "Internal server error. Check server logs for details."}, 500

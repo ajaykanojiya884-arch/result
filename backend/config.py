@@ -67,5 +67,5 @@ class Config:
     MAIL_USERNAME = os.getenv("MAIL_USERNAME", "abc@gmail.com")
     MAIL_PASSWORD = os.getenv("MAIL_PASSWORD", "")
     MAIL_DEFAULT_SENDER = os.getenv(
-        "MAIL_DEFAULT_SENDER", "abc@gmail.com"
+        "MAIL_DEFAULT_SENDER", "Kanoujiyadeepak19@gmail.com"
     )

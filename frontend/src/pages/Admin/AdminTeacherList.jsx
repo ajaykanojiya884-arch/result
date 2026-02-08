@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import { confirmAction, showSuccess, showError } from "../../utils/dialogs";
 
 export default function AdminTeacherList() {
   const [teachers, setTeachers] = React.useState([]);
@@ -24,13 +25,15 @@ export default function AdminTeacherList() {
   }, []);
 
   const deleteTeacher = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this teacher?")) return;
+    const ok = await confirmAction("Are you sure you want to delete this teacher?");
+    if (!ok) return;
     try {
       await api.delete(`/admin/teachers/${id}`);
       const res = await api.get("/admin/teachers");
       setTeachers(res.data || []);
+      showSuccess("Teacher deleted successfully");
     } catch (err) {
-      alert("Failed to delete teacher");
+      showError(err.response?.data?.error || "Failed to delete teacher");
     }
   };
 

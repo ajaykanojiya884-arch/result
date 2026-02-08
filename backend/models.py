@@ -107,6 +107,38 @@ class Teacher(db.Model, UserMixin):
     def get_id(self):
         return str(self.teacher_id)
 
+    def __init__(
+        self,
+        name: str = "",
+        userid: str = "",
+        password_hash: str= "",
+        email: str = " ",
+        role: str = "TEACHER",
+        active: bool = True,
+        **kwargs,
+    ):
+        # Allow construction with keyword args (helps static checkers like Pylance)
+        if name is not None:
+            self.name = name
+        if userid is not None:
+            self.userid = userid
+        if password_hash is not None:
+            self.password_hash = password_hash
+        if email is not None:
+            self.email = email
+        if role is not None:
+            self.role = role
+        if active is not None:
+            self.active = active
+
+        # Accept and ignore additional kwargs to be flexible with callers
+        for k, v in kwargs.items():
+            try:
+                setattr(self, k, v)
+            except Exception:
+                # ignore unknown or read-only attributes
+                pass
+
 
 # =====================================================
 # TEACHER-SUBJECT ALLOCATIONS

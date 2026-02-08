@@ -8,6 +8,13 @@ export const REPORT_CONFIG = {
   reportTitle: "STATEMENT OF MARKS - XI STANDARD",
   examheldIn: "MARCH 2025",
   
+  // Logo URL - Change this to your logo path
+  // Options:
+  // 1. Public image: "/images/sies-logo.png" (place logo in frontend/public/images/)
+  // 2. External URL: "https://example.com/logo.png"
+  // 3. Leave empty string "" to show placeholder
+  logoUrl: "/images/sies.jpeg",
+  
   // Footer Signatories
   signatories: [
     { label: "CLASS TEACHER" },

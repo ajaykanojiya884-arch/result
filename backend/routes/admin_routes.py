@@ -69,7 +69,10 @@ def add_student(user_id=None, user_type=None):
     """
     Add a new student (admin only)
     """
-    data = cast(Dict[str, Any], student_schema.load(request.json or {}))
+    try:
+        data = cast(Dict[str, Any], student_schema.load(request.json or {}))
+    except Exception as e:
+        return {"error": f"Invalid request data: {str(e)}"}, 400
 
     student = Student(**data)
     # assign to active batch
@@ -84,9 +87,17 @@ def add_student(user_id=None, user_type=None):
     try:
         db.session.add(student)
         db.session.commit()
-    except IntegrityError:
+    except IntegrityError as e:
         db.session.rollback()
-        return {"error": "Student already exists"}, 409
+        error_msg = str(e.orig).lower() if hasattr(e, 'orig') else str(e)
+        if 'unique constraint' in error_msg or 'duplicate' in error_msg:
+            return {"error": "Student with this roll number and division already exists"}, 409
+        return {"error": f"Failed to add student: {str(e.orig)}"}, 409
+    except Exception as ex:
+        db.session.rollback()
+        import traceback
+        traceback.print_exc()
+        return {"error": f"Database error: {str(ex)}"}, 500
 
     # Automatically create empty Mark rows for the 4 main/core subjects
     try:
@@ -107,6 +118,7 @@ def add_student(user_id=None, user_type=None):
                 m.roll_no = student.roll_no
                 m.division = student.division
                 m.subject_id = subj.subject_id
+                m.batch_id = student.batch_id
                 m.unit1 = 0
                 m.unit2 = 0
                 m.term = 0
@@ -117,9 +129,10 @@ def add_student(user_id=None, user_type=None):
                 m.entered_by = None
                 db.session.add(m)
         db.session.commit()
-    except Exception:
-        # if this fails, don't block student creation; log in production
+    except Exception as mark_err:
+        # if this fails, don't block student creation; log the error
         db.session.rollback()
+        print(f"Warning: Failed to create default marks for student {student.roll_no}: {str(mark_err)}")
 
     return {"message": "Student added successfully"}, 201
 
@@ -991,25 +1004,39 @@ def add_teacher(user_id=None, user_type=None):
     data = request.json or {}
     required = ["name", "userid", "password"]
     if not all(k in data for k in required):
-        return {"error": "Missing required fields"}, 400
+        return {"error": "Missing required fields: name, userid, password"}, 400
 
+    # Check for duplicate userid
     if Teacher.query.filter_by(userid=data["userid"]).first():
         return {"error": "UserID already exists"}, 409
 
-    # Instantiate without calling the model constructor with unknown kwargs
-    teacher = Teacher()
-    teacher.name = data["name"]
-    teacher.userid = data["userid"]
-    teacher.email = data.get("email")
-    teacher.role = data.get("role", "TEACHER")
-    teacher.active = True
-    teacher.password_hash = generate_password_hash(data["password"])
+    try:
+        # Instantiate without calling the model constructor with unknown kwargs
+        teacher = Teacher()
+        teacher.name = data["name"]
+        teacher.userid = data["userid"]
+        teacher.email = data.get("email")
+        teacher.role = data.get("role", "TEACHER")
+        teacher.active = True
+        teacher.password_hash = generate_password_hash(data["password"])
 
-    db.session.add(teacher)
-    db.session.commit()
-    
-    
-    # Send email notification if email is provided
+        db.session.add(teacher)
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        error_msg = str(e.orig).lower() if hasattr(e, 'orig') else str(e)
+        if 'unique constraint' in error_msg:
+            return {"error": "This UserID already exists"}, 409
+        return {"error": f"Database constraint violation: {str(e.orig)}"}, 409
+    except Exception as ex:
+        db.session.rollback()
+        import traceback
+        traceback.print_exc()
+        return {"error": f"Failed to add teacher: {str(ex)}"}, 500
+
+    # Send email notification if email is provided (non-blocking)
+    email_sent = False
+    email_error = None
     if teacher.email:
         try:
             send_teacher_credentials_email(
@@ -1018,11 +1045,17 @@ def add_teacher(user_id=None, user_type=None):
                 username=teacher.userid,
                 password=data["password"]  # Send plain text password
             )
+            email_sent = True
         except Exception as e:
             # Log the error but don't fail the teacher creation
-            print(f"Failed to send email to {teacher.email}: {str(e)}")
+            email_error = str(e)
+            print(f"[WARNING] Failed to send email to {teacher.email}: {email_error}")
 
-    return {"message": "Teacher added"}, 201
+    response = {"message": "Teacher added successfully", "teacher_id": teacher.teacher_id}
+    if email_error:
+        response["email_warning"] = f"Teacher created but email notification failed: {email_error[:100]}"
+    
+    return response, 201
 
 
 
@@ -1032,27 +1065,42 @@ def update_teacher(teacher_id, user_id=None, user_type=None):
     if user_type != "ADMIN":
         return {"error": "Unauthorized"}, 403
 
-    teacher = Teacher.query.get_or_404(teacher_id)
+    teacher = Teacher.query.get(teacher_id)
+    if not teacher:
+        return {"error": "Teacher not found"}, 404
+
     data = request.json or {}
 
-    teacher.name = data.get("name", teacher.name)
-    teacher.userid = data.get("userid", teacher.userid)
-    teacher.email = data.get("email", teacher.email)
-    teacher.active = data.get("active", teacher.active)
+    try:
+        teacher.name = data.get("name", teacher.name)
+        teacher.userid = data.get("userid", teacher.userid)
+        teacher.email = data.get("email", teacher.email)
+        teacher.active = data.get("active", teacher.active)
 
-    # Only update password when a non-empty new password is provided.
-    # This prevents overwriting the stored hashed password when the
-    # frontend leaves the password field blank (meaning "keep old").
-    password = (data.get("password") or "").strip()
-    password_updated = False
-    if password:
-        teacher.password_hash = generate_password_hash(password)
-        password_updated = True
+        # Only update password when a non-empty new password is provided.
+        # This prevents overwriting the stored hashed password when the
+        # frontend leaves the password field blank (meaning "keep old").
+        password = (data.get("password") or "").strip()
+        password_updated = False
+        if password:
+            teacher.password_hash = generate_password_hash(password)
+            password_updated = True
 
-    db.session.commit()
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
+        error_msg = str(e.orig).lower() if hasattr(e, 'orig') else str(e)
+        if 'unique constraint' in error_msg:
+            return {"error": "UserID already exists"}, 409
+        return {"error": f"Database constraint violation: {str(e.orig)}"}, 409
+    except Exception as ex:
+        db.session.rollback()
+        import traceback
+        traceback.print_exc()
+        return {"error": f"Failed to update teacher: {str(ex)}"}, 500
 
-
-    # Send email notification if password was updated and email is provided
+    # Send email notification if password was updated and email is provided (non-blocking)
+    email_error = None
     if password_updated and teacher.email:
         try:
             send_teacher_credentials_email(
@@ -1063,9 +1111,14 @@ def update_teacher(teacher_id, user_id=None, user_type=None):
             )
         except Exception as e:
             # Log the error but don't fail the teacher update
-            print(f"Failed to send email to {teacher.email}: {str(e)}")
+            email_error = str(e)
+            print(f"[WARNING] Failed to send email to {teacher.email}: {email_error}")
 
-    return {"message": "Teacher updated"}, 200
+    response = {"message": "Teacher updated"}
+    if email_error:
+        response["email_warning"] = f"Teacher updated but email notification failed: {email_error[:100]}"
+    
+    return response, 200
 
 
 
@@ -1075,11 +1128,25 @@ def delete_teacher(teacher_id, user_id=None, user_type=None):
     if user_type != "ADMIN":
         return {"error": "Unauthorized"}, 403
 
-    teacher = Teacher.query.get_or_404(teacher_id)
-    db.session.delete(teacher)
-    db.session.commit()
+    teacher = Teacher.query.get(teacher_id)
+    if not teacher:
+        return {"error": "Teacher not found"}, 404
 
-    return {"message": "Teacher deleted"}, 200
+    try:
+        db.session.delete(teacher)
+        db.session.commit()
+        return {"message": "Teacher deleted successfully"}, 200
+    except IntegrityError as e:
+        db.session.rollback()
+        error_msg = str(e.orig).lower() if hasattr(e, 'orig') else str(e)
+        if 'foreign key constraint' in error_msg or 'fk_' in error_msg:
+            return {"error": "Cannot delete teacher: they have active allocations or grades. Please unassign subjects first."}, 409
+        return {"error": f"Database constraint violation: {str(e.orig)}"}, 409
+    except Exception as ex:
+        db.session.rollback()
+        import traceback
+        traceback.print_exc()
+        return {"error": f"Failed to delete teacher: {str(ex)}"}, 500
 
 
 # ======================================================

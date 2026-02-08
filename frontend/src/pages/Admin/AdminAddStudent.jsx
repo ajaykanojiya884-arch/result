@@ -33,7 +33,7 @@ export default function AdminAddStudent() {
       alert("Student added successfully");
       navigate("/admin/students");
     } catch (err) {
-      alert("Failed to add student");
+      alert(err.response?.data?.error || "Failed to add student");
     }
   };
 

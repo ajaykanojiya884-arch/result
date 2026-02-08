@@ -1,6 +1,7 @@
 // src/pages/Teacher/UpdateMarks.jsx
 import React, { useEffect, useState } from "react";
 import api from "../../services/api";
+import { confirmAction, showSuccess, showError } from "../../utils/dialogs";
 import { useAuth } from "../../context/AuthContext";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -54,7 +55,10 @@ export default function UpdateMarks() {
   }, [chosenSubjectId, division]);
 
   const fetchStudents = async () => {
-    if (!chosenSubjectId || !division) return alert("Select subject & division");
+    if (!chosenSubjectId || !division) {
+      showError("Select subject & division");
+      return;
+    }
 
     setLoading(true);
     try {
@@ -102,9 +106,13 @@ export default function UpdateMarks() {
   };
 
   const saveAll = async () => {
-    if (Object.keys(errors).length) return alert("Fix errors first");
+    if (Object.keys(errors).length) {
+      showError("Fix errors first");
+      return;
+    }
 
-    if (!window.confirm("Save all marks?")) return;
+    const ok = await confirmAction("Save all marks?");
+    if (!ok) return;
 
     setLoading(true);
     try {
@@ -118,10 +126,10 @@ export default function UpdateMarks() {
       }));
 
       await api.post("/teacher/marks/batch", { entries });
-      alert("Saved successfully");
+      showSuccess("Saved successfully");
       fetchStudents();
     } catch {
-      alert("Save failed");
+      showError("Save failed");
     }
     setLoading(false);
   };

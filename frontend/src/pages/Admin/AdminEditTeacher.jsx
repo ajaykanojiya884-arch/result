@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../services/api";
+import { showError, showSuccess } from "../../utils/dialogs";
 
 export default function AdminEditTeacher() {
   const { id } = useParams();
@@ -21,7 +22,7 @@ export default function AdminEditTeacher() {
       const teacher = res.data.find((t) => t.teacher_id === parseInt(id));
 
       if (!teacher) {
-        alert("Teacher not found");
+        showError("Teacher not found");
         navigate("/admin");
         return;
       }
@@ -33,8 +34,8 @@ export default function AdminEditTeacher() {
         password: teacher.password || "",
         active: teacher.active,
       });
-    } catch {
-      alert("Failed to load teacher");
+    } catch (err) {
+      showError(err.response?.data?.error || "Failed to load teacher");
     }
   }, [id, navigate]);
 
@@ -56,9 +57,10 @@ export default function AdminEditTeacher() {
       const payload = { ...form };
       if (!payload.password) delete payload.password;
       await api.put(`/admin/teachers/${id}`, payload);
-      navigate("/admin");
-    } catch {
-      alert("Failed to update teacher");
+      showSuccess("Teacher updated successfully");
+      navigate("/admin/teachers");
+    } catch (err) {
+      showError(err.response?.data?.error || "Failed to update teacher");
     }
   };
 

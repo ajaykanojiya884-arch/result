@@ -36,7 +36,7 @@ class UpdateTeacherSchema(Schema):
 # ------------------------------
 class StudentSchema(Schema):
     student_id = fields.Int()
-    roll_no = fields.Int(required=True)
+    roll_no = fields.Str(required=True)  # Changed from Int to Str
     name = fields.Str(required=True)
     division = fields.Str(required=True)
     optional_subject = fields.Str(allow_none=True)
