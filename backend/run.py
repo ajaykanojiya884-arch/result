@@ -31,7 +31,7 @@ if __name__ == "__main__":
     debug_mode = (FLASK_ENV == 'development')
 
     app.run(
-        host='127.0.0.1',   # change to 127.0.0.1 for local only
+        host='0.0.0.0',   # change to 127.0.0.1 for local only
         port=5000,
         debug=debug_mode,
         use_reloader=debug_mode

@@ -183,8 +183,8 @@ class Student(db.Model):
     name = db.Column(db.String(200), nullable=False)
     division = db.Column(db.String(10), nullable=False)
 
-    optional_subject = db.Column(db.String(20))      # HINDI / IT
-    optional_subject_2 = db.Column(db.String(20))    # MATHS / SP
+    optional_subject = db.Column(db.String(20), nullable=False)      # HINDI / IT
+    optional_subject_2 = db.Column(db.String(20), nullable=False)    # MATHS / SP
 
     created_at = db.Column(db.DateTime, default=now, nullable=False)
     updated_at = db.Column(db.DateTime, default=now, onupdate=now, nullable=False)
