@@ -131,8 +131,8 @@ const MarksheetTemplate = forwardRef(({ data, style }, ref) => {
                   width: '100px',
                   height: '80px',
                   objectFit: 'contain',
-                  borderRadius: '8px',
-                   border: '1px solid #999'
+                  // borderRadius: '8px',
+                  // border: '1px solid #999'
                 }}
                 onError={(e) => {
                   // Fallback to placeholder if image fails to load
@@ -181,14 +181,26 @@ const MarksheetTemplate = forwardRef(({ data, style }, ref) => {
             }}>
               {REPORT_CONFIG.schoolAddress}
             </div>
+            
             <h3 style={{
               margin: '6px 0 0 0',
-              fontSize: '15px',
+              fontSize: '17px',
               fontWeight: 'bold',
               letterSpacing: '0.5px'
             }}>
               STATEMENT OF MARKS – XI STANDARD
             </h3>
+
+            <div>
+              <h6 style={{
+              margin: '6px 0 0 0',
+              // fontSize: '15px',
+              fontWeight: 'bold',
+              letterSpacing: '0.5px'
+            }}>
+            INDEX NO: J16.15.017 &nbsp; | &nbsp; UDISE NO: 27211007406
+              </h6>
+          </div>
           </div>
 
           {/* Right Spacer (for symmetry with logo) */}
@@ -199,18 +211,16 @@ const MarksheetTemplate = forwardRef(({ data, style }, ref) => {
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
+          textAlign: 'center',
           fontSize: '11px',
           marginTop: '8px',
           fontWeight: 'bold',
           padding: '0 5px',
           alignItems: 'center'
         }}>
-          <div>
-            INDEX NO: J16.15.017 &nbsp; | &nbsp; UDISE NO: 27211007406
-          </div>
-          <div>
+          {/* <div> */}
             EXAMINATION HELD IN {REPORT_CONFIG.examheldIn} &nbsp; | &nbsp; Date: {getCurrentDate()}
-          </div>
+          {/* </div> */}
         </div>
       </div>
 
